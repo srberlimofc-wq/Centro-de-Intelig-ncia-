@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import asyncio
@@ -79,11 +78,7 @@ def permission_changes(before, after):
     return changes
 
 
-async def find_audit_entry(
-    guild,
-    action,
-    target_id=None,
-):
+async def find_audit_entry(guild, action, target_id=None):
     if not guild.me or not guild.me.guild_permissions.view_audit_log:
         return None
 
@@ -93,8 +88,7 @@ async def find_audit_entry(
                 limit=10,
                 action=action,
             ):
-                created = entry.created_at
-                age = discord.utils.utcnow() - created
+                age = discord.utils.utcnow() - entry.created_at
 
                 if age > timedelta(seconds=30):
                     continue
@@ -123,11 +117,7 @@ async def find_audit_entry(
 
 
 async def add_responsible(embed, guild, action, target_id=None):
-    entry = await find_audit_entry(
-        guild,
-        action,
-        target_id,
-    )
+    entry = await find_audit_entry(guild, action, target_id)
 
     if entry:
         add_field(embed, "Responsável", display(entry.user))
@@ -183,8 +173,7 @@ class AuditLogger:
         add_target(embed, channel)
 
         await add_responsible(
-            embed,
-            channel.guild,
+            embed, channel.guild,
             discord.AuditLogAction.channel_create,
             channel.id,
         )
@@ -196,8 +185,7 @@ class AuditLogger:
         add_target(embed, channel)
 
         await add_responsible(
-            embed,
-            channel.guild,
+            embed, channel.guild,
             discord.AuditLogAction.channel_delete,
             channel.id,
         )
@@ -218,20 +206,14 @@ class AuditLogger:
             new = getattr(after, attribute, None)
 
             if old != new:
-                changes.append(
-                    f"**{label}:** `{old}` → `{new}`"
-                )
+                changes.append(f"**{label}:** `{old}` → `{new}`")
 
         if changes:
-            embed = make_embed(
-                "Canal alterado",
-                "\n".join(changes),
-            )
+            embed = make_embed("Canal alterado", "\n".join(changes))
             add_target(embed, after)
 
             await add_responsible(
-                embed,
-                after.guild,
+                embed, after.guild,
                 discord.AuditLogAction.channel_update,
                 after.id,
             )
@@ -246,8 +228,7 @@ class AuditLogger:
             add_target(embed, after)
 
             await add_responsible(
-                embed,
-                after.guild,
+                embed, after.guild,
                 discord.AuditLogAction.overwrite_update,
                 after.id,
             )
@@ -259,8 +240,7 @@ class AuditLogger:
         add_target(embed, role)
 
         await add_responsible(
-            embed,
-            role.guild,
+            embed, role.guild,
             discord.AuditLogAction.role_create,
             role.id,
         )
@@ -272,8 +252,7 @@ class AuditLogger:
         add_target(embed, role)
 
         await add_responsible(
-            embed,
-            role.guild,
+            embed, role.guild,
             discord.AuditLogAction.role_delete,
             role.id,
         )
@@ -295,25 +274,18 @@ class AuditLogger:
 
             if old != new:
                 if attribute == "permissions":
-                    differences = permission_changes(old, new)
-                    changes.extend(differences)
+                    changes.extend(permission_changes(old, new))
                 else:
-                    changes.append(
-                        f"**{label}:** `{old}` → `{new}`"
-                    )
+                    changes.append(f"**{label}:** `{old}` → `{new}`")
 
         if not changes:
             return
 
-        embed = make_embed(
-            "Cargo alterado",
-            "\n".join(changes),
-        )
+        embed = make_embed("Cargo alterado", "\n".join(changes))
         add_target(embed, after)
 
         await add_responsible(
-            embed,
-            after.guild,
+            embed, after.guild,
             discord.AuditLogAction.role_update,
             after.id,
         )
@@ -338,14 +310,12 @@ class AuditLogger:
         new_roles = {role.id for role in after.roles}
 
         added = [
-            role.mention
-            for role in after.roles
+            role.mention for role in after.roles
             if role.id not in old_roles
         ]
 
         removed = [
-            role.mention
-            for role in before.roles
+            role.mention for role in before.roles
             if role.id not in new_roles
         ]
 
@@ -365,16 +335,12 @@ class AuditLogger:
         if not changes:
             return
 
-        embed = make_embed(
-            "Membro atualizado",
-            "\n".join(changes),
-        )
+        embed = make_embed("Membro atualizado", "\n".join(changes))
         add_target(embed, after)
 
         if old_roles != new_roles:
             await add_responsible(
-                embed,
-                after.guild,
+                embed, after.guild,
                 discord.AuditLogAction.member_role_update,
                 after.id,
             )
@@ -406,7 +372,6 @@ class AuditLogger:
             f"{member.mention} entrou no servidor.",
         )
         add_target(embed, member)
-
         await self.send(member.guild, "membros", embed)
 
     async def log_member_remove(self, member):
@@ -437,8 +402,7 @@ class AuditLogger:
         add_target(embed, user)
 
         await add_responsible(
-            embed,
-            guild,
+            embed, guild,
             discord.AuditLogAction.ban,
             user.id,
         )
@@ -450,8 +414,7 @@ class AuditLogger:
         add_target(embed, user)
 
         await add_responsible(
-            embed,
-            guild,
+            embed, guild,
             discord.AuditLogAction.unban,
             user.id,
         )
@@ -472,9 +435,7 @@ class AuditLogger:
             new = getattr(after, attribute, None)
 
             if old != new:
-                changes.append(
-                    f"**{label}:** `{old}` → `{new}`"
-                )
+                changes.append(f"**{label}:** `{old}` → `{new}`")
 
         if not changes:
             return
@@ -485,11 +446,9 @@ class AuditLogger:
         )
 
         await add_responsible(
-            embed,
-            after,
+            embed, after,
             discord.AuditLogAction.guild_update,
             after.id,
         )
 
         await self.send(after, "servidor", embed)
-
